@@ -1,5 +1,7 @@
 package me.maksuslik.controller
 
+import me.maksuslik.data.UserSignInRequest
+import me.maksuslik.data.UserSignUpRequest
 import me.maksuslik.service.AuthService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -17,6 +19,12 @@ class AuthController(val authService: AuthService) {
 
         return ResponseEntity.ok(response)
     }
+
+    @PostMapping("/signup")
+    fun signUp(@RequestBody body: UserSignUpRequest) = authService.signUp(body)
+
+    @PostMapping
+    fun signIn(@RequestBody body: UserSignInRequest) = authService.signIn(body)
 
     @GetMapping("/me")
     fun getMe(@RequestHeader("X-Auth-Token") token: String): ResponseEntity<Map<String, String>> {

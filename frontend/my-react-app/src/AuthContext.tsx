@@ -14,14 +14,14 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  isLoading: boolean;
+  isLoadingUser: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -46,14 +46,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (token && login) {
         setUser({ token, login });
       }
-      setIsLoading(false);
+      setIsLoadingUser(false);
     };
 
     initAuth();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading }}>
+    <AuthContext.Provider value={{ user, isLoadingUser }}>
       {children}
     </AuthContext.Provider>
   );

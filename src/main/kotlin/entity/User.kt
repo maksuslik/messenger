@@ -7,12 +7,12 @@ import java.util.*
 
 @Table(name = "users")
 @Entity(name = "users")
-data class UserData(
+data class User(
     var login: String,
     var authToken: String, // TODO: to redis
-
+    var password: String? = null,
     @Id
-    var id: UUID? = UUID.randomUUID(),
+    var id: UUID = UUID.randomUUID(),
 ) {
-    constructor(): this("", "", UUID.randomUUID())
+    constructor(): this("", "", null, UUID.randomUUID())
 }
