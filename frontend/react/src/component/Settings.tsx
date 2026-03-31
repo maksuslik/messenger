@@ -1,7 +1,7 @@
 // components/Settings.tsx
 import React, { useState } from 'react';
 import { Profile } from '../types';
-import './Settings.css';
+import '../style/Settings.css';
 
 interface SettingsProps {
   profile: Profile;

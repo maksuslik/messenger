@@ -39,6 +39,13 @@ data class Message(
     constructor(): this(null, null, "", false, false, Instant.now(), null, UUID.randomUUID())
 
     fun toMap(): Map<String, Any> {
-        return mapOf()
+        return mapOf(
+            "id" to id.toString(),
+            "chatId" to chat?.id.toString(),
+            "userId" to user?.id.toString(),
+            "username" to user!!.login,
+            "content" to content,
+            "timestamp" to createdAt.toString()
+        )
     }
 }

@@ -1,18 +1,26 @@
-import { Profile, Chat, User, Message } from '../types.ts'
+import { Profile, Chat, User, Message, Friendship, InviteData, FriendData } from '../types.ts'
 import api from '../AuthContext'
 
-class ApiService {
-  constructor() {
-    api.interceptors.request.use((config) => {
-      const token = localStorage.getItem('token');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
-    });
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('authToken');
+  console.log("auth token: " + token)
+  if (token) {
+    config.headers['Authorization'] = token; 
+  }
+  return config;
+});
 
+class ApiService {
+  /*constructor() {
     api.interceptors.response.use(
-      (response) => response,
+      (response) => {
+        const token = localStorage.getItem('authToken');
+        console.log("auth: " + token)
+        if(token) {
+          response.headers['Authorization'] = token;
+        }
+        return response;
+      },
       (error) => {
         if (error.response?.status === 401) {
           localStorage.removeItem('token');
@@ -21,7 +29,7 @@ class ApiService {
         return Promise.reject(error);
       }
     );
-  }
+  }*/
 
   // Профиль
   async getProfile(): Promise<Profile> {
@@ -45,11 +53,7 @@ class ApiService {
       }
     }
 
-    const { data } = await api.get('/auth/me', {
-      headers: {
-        "X-Auth-Token": token
-      }
-    });
+    const { data } = await api.get('/auth/me');
     return data;
   }
 
@@ -67,17 +71,15 @@ class ApiService {
 
   // Чаты
   async getChats(): Promise<Chat[]> {
-    let token = localStorage.getItem('authToken');
-    const { data } = await api.get('/chats/get', {
-      headers: {
-        "X-Auth-Token": token
-      }
-    });
+    const { data } = await api.get('/chats/get');
     return data;
   }
 
   async createChat(name: string): Promise<Chat> {
-    const { data } = await api.post('/chats', { name });
+    const { data } = await api.post(
+        '/chats/create',
+        { "name": name }
+    );
     return data;
   }
 
@@ -93,7 +95,7 @@ class ApiService {
   }
 
   // Друзья
-  async getFriends(): Promise<User[]> {
+  async getFriends(): Promise<FriendData[]> {
     const { data } = await api.get('/friends');
     return data;
   }
@@ -101,6 +103,16 @@ class ApiService {
   async createInviteUrl(): Promise<string> {
     const { data } = await api.post('/friends/invite-url');
     return data.url;
+  }
+
+  async getInviteData(token: string): Promise<InviteData> {
+    const { data } = await api.post("/friends/invite/get", { token })
+    return data
+  }
+
+  async acceptInvite(token: string): Promise<Friendship> {
+    const { data } = await api.post("/friends/accept", { token })
+    return data
   }
 }
 

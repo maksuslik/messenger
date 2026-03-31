@@ -1,7 +1,7 @@
 // components/ChatWindow.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { Message } from '../types';
-import './ChatWindow.css';
+import '../style/ChatWindow.css';
 
 interface ChatWindowProps {
   chatId: string | null;
@@ -27,11 +27,29 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     scrollToBottom();
   }, [messages]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  /*const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputValue.trim() && chatId) {
       onSendMessage(inputValue.trim());
       setInputValue('');
+    }
+  };*/
+
+  const sendMessage = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!inputValue.trim() || !chatId) return;
+        
+    onSendMessage(inputValue.trim());
+    setInputValue('');
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (!inputValue.trim() || !chatId) return;
+        
+    onSendMessage(inputValue.trim());
+    setInputValue('');
     }
   };
 
@@ -65,15 +83,16 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      <form className="message-input-form" onSubmit={handleSubmit}>
+      <form className="message-input-form" onSubmit={sendMessage}>
         <button type="button" className="attach-button">📎</button>
-        <input
-          type="text"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          placeholder="Напишите сообщение..."
-          className="message-input"
-        />
+        <textarea
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Сообщение..."
+                rows={1}
+                className="chat-input"
+            />
         <button type="submit" className="send-button">➤</button>
       </form>
     </div>

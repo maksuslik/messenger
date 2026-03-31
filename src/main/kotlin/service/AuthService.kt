@@ -49,4 +49,9 @@ class AuthService(val userRepo: UserRepo) {
     fun validateToken(token: String): User? {
         return userRepo.findByAuthToken(token).orElse(null)
     }
+
+    fun getByTokenOrThrow(token: String): User {
+        return userRepo.findByAuthToken(token)
+            .orElseThrow { StatusCodeException(401, Message.UNAUTHORIZED) }
+    }
 }

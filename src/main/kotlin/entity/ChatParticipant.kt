@@ -23,16 +23,18 @@ data class ChatParticipant(
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("chatId")
     @JoinColumn(name = "chat_id")
-    val chat: Chat,
+    val chat: Chat? = null,
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("userId")
     @JoinColumn(name = "user_id")
-    val user: User,
+    val user: User? = null,
 
     @Enumerated(EnumType.STRING)
     val role: ParticipantRole = ParticipantRole.MEMBER
-)
+) {
+    constructor(): this(ChatParticipantId(), null, null, ParticipantRole.MEMBER)
+}
 
 @Embeddable
 data class ChatParticipantId(

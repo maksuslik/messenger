@@ -11,8 +11,9 @@ data class User(
     var login: String,
     var authToken: String, // TODO: to redis
     var password: String? = null,
+    var avatar: String? = null,
     @Id
     var id: UUID = UUID.randomUUID(),
 ) {
-    constructor(): this("", "", null, UUID.randomUUID())
+    constructor(): this("", "", null, null, UUID.randomUUID())
 }

@@ -21,7 +21,7 @@ data class Chat(
     @Enumerated(EnumType.STRING)
     val type: ChatType,
 
-    @OneToMany(mappedBy = "chat", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @OneToMany(mappedBy = "chat", cascade = [CascadeType.PERSIST, CascadeType.MERGE], orphanRemoval = true)
     val messages: MutableList<Message> = mutableListOf(),
 
     @OneToMany(mappedBy = "chat", cascade = [CascadeType.ALL], orphanRemoval = true)

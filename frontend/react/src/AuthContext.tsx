@@ -43,6 +43,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       }
 
+      console.log("token: " + token)
+
       if (token && login) {
         setUser({ token, login });
       }

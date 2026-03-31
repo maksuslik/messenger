@@ -1,7 +1,7 @@
 export interface User {
   id: string;
   username: string;
-  //avatar?: string;
+  avatar?: string;
   status?: 'online' | 'offline';
 }
 
@@ -30,4 +30,24 @@ export interface Profile {
   username: string;
   //avatar?: string;
   //email?: string;
+}
+
+export interface Friendship {
+  userId: string;
+  friendId: string;
+  chatId: string;
+  status: 'pending' | 'accepted' | 'declined';
+}
+
+export interface InviteData {
+  userId: string;
+  username: string;
+  avatar: string;
+}
+
+export interface FriendData {
+  id: string;
+  username: string;
+  avatar?: string;
+  chatId: string;
 }

@@ -27,7 +27,8 @@ class AuthController(val authService: AuthService) {
     fun signIn(@RequestBody body: UserSignInRequest) = authService.signIn(body)
 
     @GetMapping("/me")
-    fun getMe(@RequestHeader("X-Auth-Token") token: String): ResponseEntity<Map<String, String>> {
+    fun getMe(@RequestHeader("Authorization") token: String): ResponseEntity<Map<String, String>> {
+        println("token: $token")
         val user = authService.validateToken(token) ?: return ResponseEntity.status(401).build()
 
         val response = mapOf(

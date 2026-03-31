@@ -1,26 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import Sidebar from './component/Sidebar';
 import ChatWindow from './component/ChatWindow';
 import Settings from './component/Settings';
 import { apiService } from './service/api';
-import { Chat, Message, Profile } from './types';
+import { User, Chat, Message, Profile, FriendData } from './types';
 import './App.css';
 
 const App: React.FC = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [chats, setChats] = useState<Chat[]>([]);
+  const [friends, setFriends] = useState<FriendData[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'friends' | 'groups' | 'invitations'>('groups');
   const [showSettings, setShowSettings] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Загрузка начальных данных
   useEffect(() => {
     loadInitialData();
   }, []);
 
-  // Загрузка сообщений при смене чата
   useEffect(() => {
     if (activeChat) {
       loadMessages(activeChat);
@@ -29,12 +28,14 @@ const App: React.FC = () => {
 
   const loadInitialData = async () => {
     try {
-      const [profileData, chatsData] = await Promise.all([
+      const [profileData, chatsData, friendshipData] = await Promise.all([
         apiService.getProfile(),
         apiService.getChats(),
+        apiService.getFriends()
       ]);
       setProfile(profileData);
       setChats(chatsData);
+      setFriends(friendshipData)
     } catch (error) {
       console.error('Error loading data:', error);
     }
@@ -79,6 +80,7 @@ const App: React.FC = () => {
       try {
         const newChat = await apiService.createChat(name);
         setChats((prev) => [...prev, newChat]);
+        setShowSettings(false);
       } catch (error) {
         console.error('Error creating group:', error);
       }
@@ -123,6 +125,7 @@ const App: React.FC = () => {
     <div className="app">
       <Sidebar
         profile={profile}
+        friends={friends}
         chats={chats}
         activeChat={activeChat}
         onChatSelect={setActiveChat}
