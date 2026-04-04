@@ -2,6 +2,9 @@ export interface User {
   id: string;
   username: string;
   avatar?: string;
+  token?: string;
+  findById?: boolean;
+  isTemporary?: boolean;
   status?: 'online' | 'offline';
 }
 
@@ -28,8 +31,8 @@ export interface Message {
 export interface Profile {
   id: string;
   username: string;
+  findById: boolean;
   //avatar?: string;
-  //email?: string;
 }
 
 export interface Friendship {

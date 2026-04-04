@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const initAuth = async () => {
       let token = localStorage.getItem('authToken');
-      let login = localStorage.getItem('userLogin');
+      let login;
 
       if (!token) {
         try {
@@ -34,9 +34,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           token = response.data.token;
           login = response.data.login;
 
-          if(token && login) {
+          if(token) {
             localStorage.setItem('authToken', token);
-            localStorage.setItem('userLogin', login);
+            //localStorage.setItem('userLogin', login);
           }
         } catch (error) {
           console.error("Failed to register", error);

@@ -23,15 +23,14 @@ const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   onTabChange,
 }) => {
-  console.log("friends: " + friends.map((friend) => (friend.username)))
   return (
     <div className="sidebar">
       <div className="sidebar-header">
         <div className="user-profile" onClick={onSettingsClick}>
-          <img src={profile.avatar || '/default-avatar.png'} alt={profile.login} className="avatar" />
+          <img src={profile.avatar || '/default-avatar.png'} alt={profile.username} className="avatar" />
           <div className="user-info">
-            <div className="username">{profile.login}</div>
-            <div className="userid">({profile.id})</div>
+            <div className="username">{profile.username}</div>
+            <div className="userid">@{profile.id}</div>
           </div>
         </div>
         <div className="search-icon">🔍</div>

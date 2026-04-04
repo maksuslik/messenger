@@ -6,4 +6,7 @@ object Message {
     val RESPONSE_ERROR = "Ошибка в данных запроса"
     val INCORRECT_DATA = "Неверный логин или пароль"
     val LOGIN_EXISTS = "Такой пользователь уже существует!"
+    val INCORRECT_LOGIN = "Некорректный логин!"
+    val INCORRECT_ID = "Некорректный id!"
+    val INCORRECT_PASSWORD = "Некорректный пароль!"
 }

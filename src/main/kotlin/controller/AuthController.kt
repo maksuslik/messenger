@@ -12,30 +12,24 @@ class AuthController(val authService: AuthService) {
     @PostMapping("/init")
     fun initSession(): ResponseEntity<Any> {
         val user = authService.initSession()
-        val response = mapOf(
+        /*val response = mapOf(
             "login" to user.login,
             "token" to user.authToken,
-        )
+        )*/
 
-        return ResponseEntity.ok(response)
+        return ResponseEntity.ok(user.toMap())
     }
 
     @PostMapping("/signup")
     fun signUp(@RequestBody body: UserSignUpRequest) = authService.signUp(body)
 
-    @PostMapping
+    @PostMapping("/login")
     fun signIn(@RequestBody body: UserSignInRequest) = authService.signIn(body)
 
     @GetMapping("/me")
-    fun getMe(@RequestHeader("Authorization") token: String): ResponseEntity<Map<String, String>> {
-        println("token: $token")
+    fun getMe(@RequestHeader("Authorization") token: String): ResponseEntity<Any> {
         val user = authService.validateToken(token) ?: return ResponseEntity.status(401).build()
-
-        val response = mapOf(
-            "login" to user.login,
-            "id" to user.id.toString()
-        )
-
-        return ResponseEntity.ok(response)
+        println("ME: " + user.toMap())
+        return ResponseEntity.ok(user.toMap())
     }
 }

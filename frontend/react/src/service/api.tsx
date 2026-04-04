@@ -1,50 +1,29 @@
 import { Profile, Chat, User, Message, Friendship, InviteData, FriendData } from '../types.ts'
 import api from '../AuthContext'
 
-api.interceptors.request.use((config) => {
+class ApiService {
+  constructor() {
+    api.interceptors.request.use((config) => {
   const token = localStorage.getItem('authToken');
-  console.log("auth token: " + token)
+
   if (token) {
     config.headers['Authorization'] = token; 
   }
   return config;
 });
-
-class ApiService {
-  /*constructor() {
-    api.interceptors.response.use(
-      (response) => {
-        const token = localStorage.getItem('authToken');
-        console.log("auth: " + token)
-        if(token) {
-          response.headers['Authorization'] = token;
-        }
-        return response;
-      },
-      (error) => {
-        if (error.response?.status === 401) {
-          localStorage.removeItem('token');
-          window.location.href = '/login';
-        }
-        return Promise.reject(error);
-      }
-    );
-  }*/
+  }
 
   // Профиль
-  async getProfile(): Promise<Profile> {
+  async getProfile(): Promise<User> {
     let token = localStorage.getItem('authToken');
-    let login = localStorage.getItem('userLogin');
 
     if (!token) {
       try {
         const response = await api.post('/auth/init');
         token = response.data.token;
-        login = response.data.login;
 
-        if(token && login) {
+        if(token) {
           localStorage.setItem('authToken', token);
-          localStorage.setItem('userLogin', login);
         }
 
         return { id: response.data.id, username: response.data.username }
@@ -57,14 +36,30 @@ class ApiService {
     return data;
   }
 
-  async updateProfile(profile: Partial<Profile>): Promise<Profile> {
-    const { data } = await api.put('/profile', profile);
+  async login(username: string, password: string): Promise<string> {
+    const { data } = await api.post('/auth/login', {
+      "username": username,
+      "password": password
+    })
+    return data.token
+  }
+
+  async signUp(username: string, password: string): Promise<User> {
+      const { data } = await api.post('/auth/signup', {
+      "username": username,
+      "password": password
+    })
+      return data;
+  }
+
+  async updateProfile(profile: Partial<User>): Promise<User> {
+    const { data } = await api.patch('/profile', profile);
     return data;
   }
 
-  async deleteProfile(profile: Partial<Profile>): Promise<Profile> {
+  async deleteProfile(token: string): Promise<Profile> {
     const { data } = await api.delete('/profile', {
-        data: profile
+        data: token
     });
     return data;
   }

@@ -1,11 +1,13 @@
-// components/Settings.tsx
 import React, { useState } from 'react';
-import { Profile } from '../types';
+import { Profile, User } from '../types';
 import '../style/Settings.css';
+import { apiService } from '../service/api'
 
 interface SettingsProps {
-  profile: Profile;
-  onSave: (profile: Partial<Profile>) => void;
+  profile: User;
+  onSave: (profile: User) => void;
+  onLogin: () => void;
+  onSignup: () => void;
   onCreateGroup: () => void;
   onCreateInviteUrl: () => void;
   onLogout: () => void;
@@ -16,6 +18,8 @@ interface SettingsProps {
 const Settings: React.FC<SettingsProps> = ({
   profile,
   onSave,
+  onLogin,
+  onSignup,
   onCreateGroup,
   onCreateInviteUrl,
   onLogout,
@@ -24,11 +28,23 @@ const Settings: React.FC<SettingsProps> = ({
 }) => {
   const [formData, setFormData] = useState({
     username: profile.username,
-    searchById: true,
+    id: profile.id,
+    findById: profile.findById ?? true,
+    isTemporary: profile.isTemporary ?? true
   });
 
-  const handleSave = () => {
-    onSave({ username: formData.username });
+  const [authError, setAuthError] = useState('');
+
+  const handleSave = async () => {
+    console.log(formData.id + " " + profile.id)
+    try {
+      const updated = await apiService.updateProfile(formData);
+      console.log(updated)
+      onSave(updated);
+    } catch (error: any) {
+      console.log("error " + error)
+      setAuthError(error.response?.data?.message || 'Ошибка входа');
+    }
   };
 
   return (
@@ -40,6 +56,13 @@ const Settings: React.FC<SettingsProps> = ({
         </div>
 
         <div className="settings-content">
+          {formData.isTemporary && <div className="notification-group temp-banner-text">
+            <span>Вы используете временный аккаунт. Он будет доступен до очистки данных браузера. Для сохранения данных</span>
+            <button className='temp-banner-link' onClick={onLogin}>войдите </button>
+            <span>или </span>
+            <button className='temp-banner-link' onClick={onSignup}>зарегистрируйтесь. </button>
+            <span>Но это не обязательно 😎</span>
+          </div>}
           <div className="form-group">
             <label>Имя:</label>
             <input
@@ -47,26 +70,30 @@ const Settings: React.FC<SettingsProps> = ({
               value={formData.username}
               onChange={(e) => setFormData({ ...formData, username: e.target.value })}
             />
-            <button className="check-button">✓</button>
           </div>
 
           <div className="form-group">
             <label>@id:</label>
-            <input type="text" value={profile.id} disabled />
-            <button className="check-button">✓</button>
+            <input 
+              type="text"
+              value={formData.id}
+              onChange={(e) => setFormData({ ...formData, id: e.target.value })}
+            />
           </div>
 
           <div className="checkbox-group">
             <input
               type="checkbox"
               id="searchById"
-              checked={formData.searchById}
-              onChange={(e) => setFormData({ ...formData, searchById: e.target.checked })}
+              checked={formData.findById!!}
+              onChange={(e) => setFormData({ ...formData, findById: e.target.checked })}
             />
             <label htmlFor="searchById">Разрешить искать меня по id.</label>
           </div>
-
+          {authError && <div className="auth-error">{authError}</div>}
+        
           <div className="settings-actions">
+            <button className="btn btn-primary" onClick={handleSave}>Сохранить изменения</button>
             <button className="btn btn-primary" onClick={onCreateGroup}>
               Создать группу
             </button>

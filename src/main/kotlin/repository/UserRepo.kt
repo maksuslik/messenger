@@ -9,4 +9,6 @@ interface UserRepo : CrudRepository<User, UUID> {
     fun findByAuthToken(token: String): Optional<User>
 
     fun findByLogin(login: String): Optional<User>
+
+    fun findByUserId(id: String): Optional<User>
 }

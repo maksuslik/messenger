@@ -7,13 +7,15 @@ import { User, Chat, Message, Profile, FriendData } from './types';
 import './App.css';
 
 const App: React.FC = () => {
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<User | null>(null);
   const [chats, setChats] = useState<Chat[]>([]);
   const [friends, setFriends] = useState<FriendData[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'friends' | 'groups' | 'invitations'>('groups');
   const [showSettings, setShowSettings] = useState(false);
+  const [showLoginPage, setShowLoginPage] = useState(false);
+  const [showSignupPage, setShowSignupPage] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -28,8 +30,17 @@ const App: React.FC = () => {
 
   const loadInitialData = async () => {
     try {
-      const [profileData, chatsData, friendshipData] = await Promise.all([
-        apiService.getProfile(),
+      await new Promise(resolve => setTimeout(resolve, 100));
+    
+      const profileData = await apiService.getProfile();
+      
+      if (!profileData || !profileData.username) {
+        throw new Error('Invalid profile data');
+      }
+
+      setProfile(profileData);
+
+      const [chatsData, friendshipData] = await Promise.all([
         apiService.getChats(),
         apiService.getFriends()
       ]);
@@ -64,10 +75,9 @@ const App: React.FC = () => {
     }
   };
 
-  const handleUpdateProfile = async (profileData: Partial<Profile>) => {
+  const handleUpdateProfile = async (profileData: User) => {
     try {
-      const updated = await apiService.updateProfile(profileData);
-      setProfile(updated);
+      setProfile(profileData);
       setShowSettings(false);
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -98,8 +108,8 @@ const App: React.FC = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    window.location.href = '/login';
+    localStorage.removeItem('authToken');
+    location.reload();
   };
 
   const handleDeleteAccount = async () => {
@@ -107,10 +117,11 @@ const App: React.FC = () => {
       try {
         if(!profile)
           return;
-
-        await apiService.deleteProfile(profile);
-        localStorage.removeItem('token');
-        window.location.href = '/login';
+        
+        const token = localStorage.getItem('authToken')!!;
+        await apiService.deleteProfile(token);
+        localStorage.removeItem('authToken');
+        location.reload();
       } catch (error) {
         console.error('Error deleting account:', error);
       }
@@ -121,6 +132,8 @@ const App: React.FC = () => {
     return <div className="loading-screen">Загрузка...</div>;
   }
 
+  console.log(profile)
+
   return (
     <div className="app">
       <Sidebar
@@ -128,7 +141,11 @@ const App: React.FC = () => {
         friends={friends}
         chats={chats}
         activeChat={activeChat}
-        onChatSelect={setActiveChat}
+        onChatSelect={(chat) => {
+          setActiveChat(chat);
+          setShowLoginPage(false);
+          setShowSignupPage(false);
+        }}
         onSettingsClick={() => setShowSettings(true)}
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -136,14 +153,38 @@ const App: React.FC = () => {
       
       <ChatWindow
         chatId={activeChat}
+        chat={chats.find((chat) => chat.id == activeChat)?.title!!}
         messages={messages}
         onSendMessage={handleSendMessage}
         isLoading={isLoading}
+        isLoginPage={showLoginPage}
+        isSignupPage={showSignupPage}
+        onLogin={() => {
+          loadInitialData();
+          setShowLoginPage(false);
+        }}
+        onSignup={() => {
+          loadInitialData();
+          setShowSignupPage(false);
+        }}
+        onClose={() => setActiveChat(null)}
       />
 
       {showSettings && (
         <Settings
           profile={profile}
+          onLogin={() => {
+            setShowSettings(false);
+            setShowLoginPage(true);
+            setShowSignupPage(false);
+            setActiveChat(null);
+          }}
+          onSignup={() => {
+            setShowSettings(false);
+            setShowSignupPage(true);
+            setShowLoginPage(false);
+            setActiveChat(null);
+          }}
           onSave={handleUpdateProfile}
           onCreateGroup={handleCreateGroup}
           onCreateInviteUrl={handleCreateInviteUrl}
@@ -157,42 +198,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-
-/*import { useAuth } from './AuthContext';
-import api from './AuthContext';
-//import api from './AuthContext';
-import { useEffect, useState } from 'react';
-
-function App() {
-  const { user, isLoading } = useAuth();
-  const [message, setMessage] = useState('');
-
-  if (isLoading) return <div>Загрузка профиля...</div>;
-
-  const testData = async () => {
-    setMessage("Загрузка...")
-    const authToken = localStorage.getItem('authToken')
-    try {
-      // Пример защищенного запроса
-      const res = await api.get('/auth/me', {
-        headers: {
-          "X-Auth-Token": authToken
-        }
-      });
-      console.log(res.data)
-      setMessage(`Response: ${res.status} OK. Login: ${res.data.login}; id: ${authToken}; authToken: ${res.data.id}`);
-    } catch (e) {
-      setMessage('Ошибка доступа');
-    }
-  };
-
-  return (
-    <div>
-      <h1>Логин: {user?.login}</h1>
-      <button onClick={testData}>Fetch data</button>
-      <p>{message}</p>
-    </div>
-  );
-}
-
-export default App;*/
