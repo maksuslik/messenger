@@ -5,6 +5,7 @@ import Settings from './component/Settings';
 import { apiService } from './service/api';
 import { User, Chat, Message, Profile, FriendData } from './types';
 import './App.css';
+import ChatSettings from './component/ChatSettings';
 
 const App: React.FC = () => {
   const [profile, setProfile] = useState<User | null>(null);
@@ -16,7 +17,9 @@ const App: React.FC = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showLoginPage, setShowLoginPage] = useState(false);
   const [showSignupPage, setShowSignupPage] = useState(false);
+  const [showChatSettings, setShowChatSettings] = useState(false)
   const [isLoading, setIsLoading] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
     loadInitialData();
@@ -90,6 +93,7 @@ const App: React.FC = () => {
       try {
         const newChat = await apiService.createChat(name);
         setChats((prev) => [...prev, newChat]);
+
         setShowSettings(false);
       } catch (error) {
         console.error('Error creating group:', error);
@@ -118,8 +122,7 @@ const App: React.FC = () => {
         if(!profile)
           return;
         
-        const token = localStorage.getItem('authToken')!!;
-        await apiService.deleteProfile(token);
+        await apiService.deleteProfile();
         localStorage.removeItem('authToken');
         location.reload();
       } catch (error) {
@@ -128,14 +131,69 @@ const App: React.FC = () => {
     }
   };
 
+  const handleUpdateChat = async (chat: Partial<Chat>) => {
+    setShowChatSettings(false);
+    await apiService.updateChat({ id: chat.id, title: chat.title })
+    setChats(chats.map((mapped) => {
+      if(mapped.id === activeChat) {
+        mapped.title = chat.title!!
+      }
+      return mapped;
+    }))
+  }
+
+  const handleDeleteChat = async () => {
+    if(!activeChat)
+      return;
+
+    if (window.confirm("Вы уверены? Это действие нельзя отменить.")) {
+      await apiService.deleteChat(activeChat);
+      removeChatFromList();
+    }
+  }
+
+  const handleLeaveChat = async () => {
+    if(!activeChat)
+      return;
+
+    await apiService.leaveChat(activeChat);
+    removeChatFromList();
+  }
+
+  const handleRemoveFriend = async () => {
+    if(!activeChat)
+      return;
+
+    const response = await apiService.removeFriend(activeChat);
+    
+    setFriends(friends.filter((friend) => friend.id != response.id))
+    removeChatFromList();
+  }
+
+  const removeChatFromList = () => {
+    setChats(chats.filter((chat) => chat.id != activeChat));
+    setActiveChat(null);
+    setShowChatSettings(false);
+  }
+
+  const getChatTitle = () => {
+      const chat = chats.find((chat) => chat.id == activeChat)
+      if(chat?.type === "DM")
+        return friends.find((friend) => friend.chatId === chat.id)!!.username;
+
+      return chat?.title!!;
+  }
+
   if (!profile) {
     return <div className="loading-screen">Загрузка...</div>;
   }
 
-  console.log(profile)
-
   return (
     <div className="app">
+      <div 
+        className={`sidebar-overlay ${sidebarOpen ? 'show' : ''}`}
+        onClick={() => setSidebarOpen(false)}
+      />
       <Sidebar
         profile={profile}
         friends={friends}
@@ -145,30 +203,56 @@ const App: React.FC = () => {
           setActiveChat(chat);
           setShowLoginPage(false);
           setShowSignupPage(false);
+          setSidebarOpen(false);
         }}
         onSettingsClick={() => setShowSettings(true)}
         activeTab={activeTab}
         onTabChange={setActiveTab}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
       
       <ChatWindow
         chatId={activeChat}
-        chat={chats.find((chat) => chat.id == activeChat)?.title!!}
+        chat={getChatTitle()}
         messages={messages}
         onSendMessage={handleSendMessage}
+        onClickSettings={() => setShowChatSettings(true)}
         isLoading={isLoading}
         isLoginPage={showLoginPage}
         isSignupPage={showSignupPage}
         onLogin={() => {
           loadInitialData();
           setShowLoginPage(false);
+          setSidebarOpen(true);
         }}
         onSignup={() => {
           loadInitialData();
           setShowSignupPage(false);
+          setSidebarOpen(true);
         }}
-        onClose={() => setActiveChat(null)}
+        onClose={() => {
+          setActiveChat(null);
+          setSidebarOpen(true);
+        }}
       />
+
+      {showChatSettings && (
+        <ChatSettings
+          chat={chats.find((chat) => chat.id == activeChat)!!}
+          onClose={() => setShowChatSettings(false)}
+          onSave={handleUpdateChat}
+          onDelete={() => {
+            handleDeleteChat();
+            setSidebarOpen(true);
+          }}
+          onLeave={() => {
+            handleLeaveChat();
+            setSidebarOpen(true);
+          }}
+          onRemoveFriend={handleRemoveFriend}
+        />
+      )}
 
       {showSettings && (
         <Settings
@@ -178,12 +262,14 @@ const App: React.FC = () => {
             setShowLoginPage(true);
             setShowSignupPage(false);
             setActiveChat(null);
+            setSidebarOpen(false);
           }}
           onSignup={() => {
             setShowSettings(false);
             setShowSignupPage(true);
             setShowLoginPage(false);
             setActiveChat(null);
+            setSidebarOpen(false);
           }}
           onSave={handleUpdateProfile}
           onCreateGroup={handleCreateGroup}

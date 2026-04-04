@@ -29,7 +29,6 @@ class AuthController(val authService: AuthService) {
     @GetMapping("/me")
     fun getMe(@RequestHeader("Authorization") token: String): ResponseEntity<Any> {
         val user = authService.validateToken(token) ?: return ResponseEntity.status(401).build()
-        println("ME: " + user.toMap())
         return ResponseEntity.ok(user.toMap())
     }
 }

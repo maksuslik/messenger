@@ -9,4 +9,5 @@ object Message {
     val INCORRECT_LOGIN = "Некорректный логин!"
     val INCORRECT_ID = "Некорректный id!"
     val INCORRECT_PASSWORD = "Некорректный пароль!"
+    val CONFLICT = "Конфликт"
 }

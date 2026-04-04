@@ -1,80 +1,113 @@
-import { Profile, Chat, User, Message, Friendship, InviteData, FriendData } from '../types.ts'
-import api from '../AuthContext'
+import {
+  Profile,
+  Chat,
+  User,
+  Message,
+  Friendship,
+  InviteData,
+  FriendData,
+  ChatInviteData
+} from "../types.ts";
+import api from "../AuthContext";
 
 class ApiService {
   constructor() {
     api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem("authToken");
 
-  if (token) {
-    config.headers['Authorization'] = token; 
-  }
-  return config;
-});
+      if (token) {
+        config.headers["Authorization"] = token;
+      }
+      return config;
+    });
   }
 
   // Профиль
   async getProfile(): Promise<User> {
-    let token = localStorage.getItem('authToken');
+    let token = localStorage.getItem("authToken");
 
     if (!token) {
       try {
-        const response = await api.post('/auth/init');
+        const response = await api.post("/auth/init");
         token = response.data.token;
 
-        if(token) {
-          localStorage.setItem('authToken', token);
+        if (token) {
+          localStorage.setItem("authToken", token);
         }
 
-        return { id: response.data.id, username: response.data.username }
+        return { id: response.data.id, username: response.data.username };
       } catch (error) {
         console.error("Failed to register", error);
       }
     }
 
-    const { data } = await api.get('/auth/me');
+    const { data } = await api.get("/auth/me");
     return data;
   }
 
   async login(username: string, password: string): Promise<string> {
-    const { data } = await api.post('/auth/login', {
-      "username": username,
-      "password": password
-    })
-    return data.token
+    const { data } = await api.post("/auth/login", {
+      username: username,
+      password: password,
+    });
+    return data.token;
   }
 
   async signUp(username: string, password: string): Promise<User> {
-      const { data } = await api.post('/auth/signup', {
-      "username": username,
-      "password": password
-    })
-      return data;
-  }
-
-  async updateProfile(profile: Partial<User>): Promise<User> {
-    const { data } = await api.patch('/profile', profile);
+    const { data } = await api.post("/auth/signup", {
+      username: username,
+      password: password,
+    });
     return data;
   }
 
-  async deleteProfile(token: string): Promise<Profile> {
-    const { data } = await api.delete('/profile', {
-        data: token
-    });
+  async updateProfile(profile: Partial<User>): Promise<User> {
+    const { data } = await api.patch("/profile", profile);
+    return data;
+  }
+
+  async deleteProfile(): Promise<Profile> {
+    const { data } = await api.delete("/profile");
     return data;
   }
 
   // Чаты
   async getChats(): Promise<Chat[]> {
-    const { data } = await api.get('/chats/get');
+    const { data } = await api.get("/chats/get");
     return data;
   }
 
   async createChat(name: string): Promise<Chat> {
-    const { data } = await api.post(
-        '/chats/create',
-        { "name": name }
-    );
+    const { data } = await api.post("/chats/create", { name: name });
+    return data;
+  }
+
+  async getChatInviteData(id: string): Promise<ChatInviteData> {
+    const { data } = await api.post("/chats/invite/get", { id });
+    return data;
+  }
+
+  async acceptChatInvite(id: string): Promise<Chat> {
+    const { data } = await api.post("/chats/join", { id });
+    return data;
+  }
+
+  async updateChat(chat: Partial<Chat>): Promise<Chat> {
+    const { data } = await api.patch("/chats/update", chat);
+    return data;
+  }
+
+  async deleteChat(chatId: string): Promise<Chat> {
+    const { data } = await api.delete("/chats/delete", {
+      data: {
+        id: chatId
+      }
+    })
+    return data;
+  }
+
+  async leaveChat(chatId: string): Promise<Chat> {
+    const { data } = await api.post("/chats/leave", { id: chatId })
     return data;
   }
 
@@ -91,23 +124,28 @@ class ApiService {
 
   // Друзья
   async getFriends(): Promise<FriendData[]> {
-    const { data } = await api.get('/friends');
+    const { data } = await api.get("/friends");
+    return data;
+  }
+
+  async removeFriend(id: string): Promise<User> {
+    const { data } = await api.post("/friends/remove", { id })
     return data;
   }
 
   async createInviteUrl(): Promise<string> {
-    const { data } = await api.post('/friends/invite-url');
+    const { data } = await api.post("/friends/invite-url");
     return data.url;
   }
 
   async getInviteData(token: string): Promise<InviteData> {
-    const { data } = await api.post("/friends/invite/get", { token })
-    return data
+    const { data } = await api.post("/friends/invite/get", { token });
+    return data;
   }
 
   async acceptInvite(token: string): Promise<Friendship> {
-    const { data } = await api.post("/friends/accept", { token })
-    return data
+    const { data } = await api.post("/friends/accept", { token });
+    return data;
   }
 }
 

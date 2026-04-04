@@ -62,7 +62,9 @@ const Settings: React.FC<SettingsProps> = ({
             <span>или </span>
             <button className='temp-banner-link' onClick={onSignup}>зарегистрируйтесь. </button>
             <span>Но это не обязательно 😎</span>
-          </div>}
+          </div>
+          }
+
           <div className="form-group">
             <label>Имя:</label>
             <input

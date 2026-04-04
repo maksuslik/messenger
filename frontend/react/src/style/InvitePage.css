@@ -1,0 +1,232 @@
+.invite-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999; /* Поверх всего интерфейса */
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.invite-modal {
+  background: linear-gradient(145deg, #2d2d3a, #252532);
+  border-radius: 20px;
+  padding: 32px;
+  width: 90%;
+  max-width: 480px;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  border: 1px solid #3d3d4a;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(30px) scale(0.95); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0) scale(1); 
+  }
+}
+
+.close-button {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 28px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.close-button:hover {
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.invite-header {
+  text-align: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #3d3d4a;
+}
+
+.invite-header h2 {
+  margin: 0;
+  font-size: 22px;
+  color: #fff;
+}
+
+.invite-content {
+  margin-bottom: 32px;
+}
+
+.inviter-profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background-color: rgba(74, 158, 255, 0.1);
+  border-radius: 12px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(74, 158, 255, 0.3);
+}
+
+.inviter-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #4a9eff;
+}
+
+.inviter-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.inviter-label {
+  font-size: 12px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.inviter-username {
+  font-size: 18px;
+  font-weight: 600;
+  color: #4a9eff;
+}
+
+.invite-description {
+  margin: 0;
+  color: #ccc;
+  font-size: 15px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.invite-description strong {
+  color: #fff;
+}
+
+.invite-expiry {
+  margin: 16px 0 0;
+  font-size: 13px;
+  color: #888;
+  text-align: center;
+}
+
+.invite-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.btn {
+  flex: 1;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-accept {
+  background: linear-gradient(135deg, #4caf50, #45a049);
+  color: white;
+}
+
+.btn-accept:hover:not(:disabled) {
+  background: linear-gradient(135deg, #45a049, #3d8b40);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(76, 175, 80, 0.4);
+}
+
+.btn-decline {
+  background: linear-gradient(135deg, #5a5a6a, #4a4a5a);
+  color: white;
+}
+
+.btn-decline:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4a4a5a, #3a3a4a);
+  transform: translateY(-2px);
+}
+
+/* Состояния загрузки и ошибки */
+.invite-modal.loading,
+.invite-modal.error {
+  text-align: center;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(74, 158, 255, 0.3);
+  border-top-color: #4a9eff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.invite-modal.error h3 {
+  margin: 0 0 12px;
+  color: #ff6b6b;
+}
+
+.invite-modal.error p {
+  margin: 0 0 24px;
+  color: #888;
+}
+
+/* Адаптив для мобильных */
+@media (max-width: 480px) {
+  .invite-modal {
+    padding: 24px 20px;
+    margin: 16px;
+  }
+  
+  .invite-actions {
+    flex-direction: column;
+  }
+  
+  .btn {
+    width: 100%;
+  }
+}

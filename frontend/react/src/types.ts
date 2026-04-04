@@ -1,6 +1,6 @@
 export interface User {
   id: string;
-  username: string;
+  username?: string;
   avatar?: string;
   token?: string;
   findById?: boolean;
@@ -13,9 +13,10 @@ export interface Chat {
   title: string;
   avatar?: string;
   members: number;
+  role?: string;
   //lastMessage?: string;
   //lastMessageTime?: string;
-  type: 'group' | 'dm';
+  type: 'GROUP' | 'DM';
 }
 
 export interface Message {
@@ -46,6 +47,12 @@ export interface InviteData {
   userId: string;
   username: string;
   avatar: string;
+}
+
+export interface ChatInviteData {
+  id: string;
+  title: string;
+  avatar?: string;
 }
 
 export interface FriendData {

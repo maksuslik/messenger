@@ -26,8 +26,8 @@ class ChatService(val chatRepo: ChatRepo) {
             chatId
         )
 
+        val role = if(type == ChatType.DM) ParticipantRole.MEMBER else ParticipantRole.OWNER
         members.forEach { user ->
-            val role = if(type == ChatType.DM) ParticipantRole.MEMBER else ParticipantRole.OWNER
             val participant = ChatParticipant(
                 ChatParticipantId(chatId, user.id),
                 chat,
@@ -43,7 +43,9 @@ class ChatService(val chatRepo: ChatRepo) {
         return mapOf(
             "id" to chatId.toString(),
             "title" to name,
-            "members" to members.size.toString()
+            "members" to members.size.toString(),
+            "type" to type.toString(),
+            "role" to role.toString()
         )
     }
 }

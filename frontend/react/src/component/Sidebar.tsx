@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Chat, FriendData } from '../types';
 import '../style/Sidebar.css';
 
@@ -11,6 +11,8 @@ interface SidebarProps {
   onSettingsClick: () => void;
   activeTab: 'friends' | 'groups' | 'invitations';
   onTabChange: (tab: 'friends' | 'groups' | 'invitations') => void;
+  isOpen?: boolean;
+  onClose: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -22,10 +24,23 @@ const Sidebar: React.FC<SidebarProps> = ({
   onSettingsClick,
   activeTab,
   onTabChange,
+  isOpen = true,
+  onClose
 }) => {
+  const [searchOpen, setSearchOpen] = useState(false);
+
   return (
-    <div className="sidebar">
+    <div className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-header">
+        {searchOpen ? <div className="search">
+          <input
+              className="search-form"
+              type="text"
+              placeholder="@юзер, #группа"
+              onChange={(e) => console.log(e)}
+            />
+          <div className="back-button" onClick={() => setSearchOpen(false)}>❌</div>
+        </div> :
         <div className="user-profile" onClick={onSettingsClick}>
           <img src={profile.avatar || '/default-avatar.png'} alt={profile.username} className="avatar" />
           <div className="user-info">
@@ -33,10 +48,12 @@ const Sidebar: React.FC<SidebarProps> = ({
             <div className="userid">@{profile.id}</div>
           </div>
         </div>
-        <div className="search-icon">🔍</div>
+      }
+
+      {!searchOpen && <div className="search-icon" onClick={() => setSearchOpen(true)}>🔍</div>}
       </div>
 
-      <div className="tabs">
+      {!searchOpen && <div className="tabs">
         <button 
           className={`tab ${activeTab === 'friends' ? 'active' : ''}`}
           onClick={() => onTabChange('friends')}
@@ -55,10 +72,10 @@ const Sidebar: React.FC<SidebarProps> = ({
         >
           Приглашения
         </button>
-      </div>
+      </div>}
 
-      {activeTab === 'groups' && (<div className="chat-list">
-        {chats.map((chat) => (
+      {activeTab === 'groups' && !searchOpen && (<div className="chat-list">
+        {chats.filter((chat) => chat.type === 'GROUP').map((chat) => (
           <div
             key={chat.id}
             className={`chat-item ${activeChat === chat.id ? 'active' : ''}`}
@@ -73,7 +90,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         ))}
       </div>)}
 
-      {activeTab === 'friends' && (
+      {activeTab === 'friends' && !searchOpen && (
         <div className="chat-list">
           {friends.map((friend) => (
             <div

@@ -1,5 +1,6 @@
 package me.maksuslik.controller
 
+import me.maksuslik.data.ChatRequestWithId
 import me.maksuslik.data.GetFriendInviteRequest
 import me.maksuslik.entity.ChatType
 import me.maksuslik.entity.Friendship
@@ -13,6 +14,7 @@ import me.maksuslik.service.AuthService
 import me.maksuslik.service.ChatService
 import me.maksuslik.util.Message
 import org.apache.coyote.Response
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
@@ -39,6 +41,19 @@ class FriendController(val authService: AuthService, val userRepo: UserRepo, val
         return ResponseEntity.ok(users)
     }
 
+    @PostMapping("/remove")
+    fun removeFriend(@RequestHeader("Authorization") token: String, @RequestBody body: ChatRequestWithId): ResponseEntity<Any> {
+        val user = authService.getByTokenOrThrow(token)
+        val friendship = friendshipRepo.findByChatId(UUID.fromString(body.id)).orElseThrow { StatusCodeException(404, Message.NOT_FOUND) }
+
+        val target = if(friendship.user?.id == user.id) friendship.friend else friendship.user
+
+        println("${friendship.id?.friendId} ${friendship.id?.userId} ${target?.id}")
+        friendshipRepo.delete(friendship)
+
+        return ResponseEntity.ok(mapOf("id" to target?.id.toString()))
+    }
+
     @PostMapping("/invite-url")
     fun getInviteUrl(@RequestHeader("Authorization") token: String): ResponseEntity<Any> {
         val user = authService.getByTokenOrThrow(token)
@@ -51,6 +66,9 @@ class FriendController(val authService: AuthService, val userRepo: UserRepo, val
     fun getInviteData(@RequestHeader("Authorization") token: String, @RequestBody request: GetFriendInviteRequest): ResponseEntity<Any> {
         val user = authService.getByTokenOrThrow(token)
         val friend = userRepo.findById(UUID.fromString(request.token)).orElseThrow { StatusCodeException(401, Message.NOT_FOUND) }
+
+        if(friend.id == user.id || friendshipRepo.findFriends(user.id).any { it.id?.friendId == friend.id || it.id?.userId == friend.id })
+            return ResponseEntity.status(409).body("message" to Message.CONFLICT)
 
         return ResponseEntity.ok(mapOf(
             "userId" to friend.id,

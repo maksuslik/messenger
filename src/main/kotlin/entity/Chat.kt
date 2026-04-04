@@ -13,22 +13,31 @@ import java.util.UUID
 @Table(name = "chats")
 @Entity(name = "chats")
 data class Chat(
-    val title: String? = null,
-    val members: Int,
-    val lastMessage: String? = null,
-    val lastMessageAt: Instant? = null,
+    var title: String? = null,
+    var members: Int,
+    var lastMessage: String? = null,
+    var lastMessageAt: Instant? = null,
 
     @Enumerated(EnumType.STRING)
-    val type: ChatType,
+    var type: ChatType,
 
     @OneToMany(mappedBy = "chat", cascade = [CascadeType.PERSIST, CascadeType.MERGE], orphanRemoval = true)
-    val messages: MutableList<Message> = mutableListOf(),
+    var messages: MutableList<Message> = mutableListOf(),
 
     @OneToMany(mappedBy = "chat", cascade = [CascadeType.ALL], orphanRemoval = true)
-    val participants: MutableList<ChatParticipant> = mutableListOf(),
+    var participants: MutableList<ChatParticipant> = mutableListOf(),
 
     @Id
-    val id: UUID? = UUID.randomUUID(),
+    var id: UUID? = UUID.randomUUID(),
 ) {
     constructor(): this(null, 0, null, null, ChatType.DM, mutableListOf(), mutableListOf(), UUID.randomUUID())
+
+    fun toMap(): Map<String, String?> {
+        return mapOf(
+            "id" to id.toString(),
+            "title" to title,
+            "type" to type.name,
+            "members" to members.toString()
+        )
+    }
 }

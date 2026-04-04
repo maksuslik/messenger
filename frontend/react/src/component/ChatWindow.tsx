@@ -8,6 +8,7 @@ interface ChatWindowProps {
   chat: string;
   messages: Message[];
   onSendMessage: (content: string) => void;
+  onClickSettings: () => void;
   isLoading: boolean;
   isLoginPage: boolean;
   isSignupPage: boolean;
@@ -21,6 +22,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   chat,
   messages,
   onSendMessage,
+  onClickSettings,
   isLoading,
   isLoginPage,
   isSignupPage,
@@ -44,14 +46,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
-  /*const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (inputValue.trim() && chatId) {
-      onSendMessage(inputValue.trim());
-      setInputValue('');
-    }
-  };*/
 
   const sendMessage = (e: React.FormEvent) => {
     e.preventDefault()
@@ -79,7 +73,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     try {
       const response = await apiService.login(login, password);
       localStorage.setItem('authToken', response);
-      //setIsAuthenticated(true);
       setLogin('');
       setPassword('');
       setAuthError('');
@@ -93,7 +86,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     }
   };
 
-  // Обработка регистрации
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError('');
@@ -114,7 +106,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       const response = await apiService.signUp(login, password);
       console.log(response)
       localStorage.setItem('authToken', response.token!!);
-      //setIsAuthenticated(true);
       setLogin('');
       setPassword('');
       setConfirmPassword('');
@@ -132,6 +123,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   if (isLoginPage || isSignupPage) {
     return (
       <div className="chat-window">
+        <button className="back-button" onClick={onClose}>←</button>
         <div className="auth-container">
           <div className="auth-form">
             <h2 className="auth-title">
@@ -211,8 +203,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     );
   }
 
-  console.log(chat)
-
   if (!chatId) {
     return (
       <div className="chat-window empty">
@@ -226,7 +216,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       <div className="infobar">
         <button className="back-button" onClick={onClose}>←</button>
           <h3>{chat}</h3>
-          <button className="settings-button">
+          <button className="settings-button" onClick={onClickSettings}>
             <img src="src/assets/icon_settings.svg" alt="Настройки" className="settings-image" />
           </button>
       </div>
