@@ -9,6 +9,7 @@ import {
   ChatInviteData
 } from "../types.ts";
 import api from "../AuthContext";
+import { matrixService } from "./MatrixService";
 
 class ApiService {
   constructor() {
@@ -29,11 +30,7 @@ class ApiService {
     if (!token) {
       try {
         const response = await api.post("/auth/init");
-        token = response.data.token;
-
-        if (token) {
-          localStorage.setItem("authToken", token);
-        }
+        await this.setData(response.data);
 
         return { id: response.data.id, username: response.data.username };
       } catch (error) {
@@ -42,15 +39,18 @@ class ApiService {
     }
 
     const { data } = await api.get("/auth/me");
+    await this.setData(data)
     return data;
   }
 
-  async login(username: string, password: string): Promise<string> {
+  async login(username: string, password: string): Promise<User> {
     const { data } = await api.post("/auth/login", {
       username: username,
       password: password,
     });
-    return data.token;
+
+    await this.setData(data);
+    return data;
   }
 
   async signUp(username: string, password: string): Promise<User> {
@@ -58,7 +58,18 @@ class ApiService {
       username: username,
       password: password,
     });
+
+    await this.setData(data);
     return data;
+  }
+
+  async setData(data: any) {
+    localStorage.setItem("authToken", data.token);
+    localStorage.setItem("matrixUserId", data.matrixUserId);
+    localStorage.setItem("matrixAccessToken", data.matrixAccessToken);
+
+    console.log(data.matrixUserId);
+    await matrixService.initialize(data.matrixUserId, data.matrixAccessToken, data.matrixDeviceId);
   }
 
   async updateProfile(profile: Partial<User>): Promise<User> {
@@ -71,14 +82,24 @@ class ApiService {
     return data;
   }
 
+  async getMatrixId(id: string): Promise<string> {
+    const { data } = await api.post("/profile/matrix", { id })
+    return data;
+  }
+
   // Чаты
   async getChats(): Promise<Chat[]> {
     const { data } = await api.get("/chats/get");
     return data;
   }
 
-  async createChat(name: string): Promise<Chat> {
-    const { data } = await api.post("/chats/create", { name: name });
+  async getChatByMatrixId(id: string): Promise<Chat> {
+    const { data } = await api.post("/chats/get/matrix", { id });
+    return data;
+  }
+
+  async createChat(name: string, matrixRoomId: string): Promise<Chat> {
+    const { data } = await api.post("/chats/create", { name: name, matrixRoomId: matrixRoomId });
     return data;
   }
 
@@ -113,12 +134,12 @@ class ApiService {
 
   // Сообщения
   async getMessages(chatId: string): Promise<Message[]> {
-    const { data } = await api.get(`/chats/${chatId}/messages`);
+    const { data } = await api.get("/chats/" + chatId + "/messages");
     return data;
   }
 
   async sendMessage(chatId: string, content: string): Promise<Message> {
-    const { data } = await api.post(`/chats/${chatId}/messages`, { content });
+    const { data } = await api.post("/chats/" + chatId + "/messages", { content });
     return data;
   }
 
@@ -143,8 +164,8 @@ class ApiService {
     return data;
   }
 
-  async acceptInvite(token: string): Promise<Friendship> {
-    const { data } = await api.post("/friends/accept", { token });
+  async acceptInvite(token: string, matrixChatId: string): Promise<Friendship> {
+    const { data } = await api.post("/friends/accept", { token, matrixChatId });
     return data;
   }
 }

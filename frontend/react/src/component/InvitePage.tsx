@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../service/api';
 import { InviteData } from '../types'
 import '../style/InvitePage.css';
+import { matrixService } from '../service/MatrixService';
 
 const InvitePage: React.FC = () => {
   const { token } = useParams<{ token: string }>();
@@ -26,9 +27,18 @@ const InvitePage: React.FC = () => {
 
   const loadInvite = async () => {
     try {
+      const authToken = localStorage.getItem("authToken");
+      if(!authToken) {
+        setError("Вы не авторизованы!")
+        return;
+      }
+
+      await apiService.getProfile();
+
       const data = await apiService.getInviteData(token!!);
       setInvite(data);
     } catch (err: any) {
+      console.log(err)
       setError(err.response?.data?.message || 'Приглашение не найдено или истекло');
     } finally {
       setLoading(false);
@@ -40,9 +50,14 @@ const InvitePage: React.FC = () => {
     
     setProcessing(true);
     try {
-      await apiService.acceptInvite(token);
+      const friendMatrixId = await apiService.getMatrixId(token);
+      const matrixChatId = await matrixService.createRoom("DM", "DM", [friendMatrixId]);
+      await matrixService.getClient()?.joinRoom(matrixChatId);
+
+      const invite = await apiService.acceptInvite(token, matrixChatId);
       navigate('/', { state: { showNotification: 'Друзья добавлены!' } });
     } catch (err: any) {
+      console.log(err)
       setError(err.response?.data?.message || 'Ошибка при принятии приглашения');
     } finally {
       setProcessing(false);

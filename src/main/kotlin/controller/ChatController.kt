@@ -1,6 +1,6 @@
 package me.maksuslik.controller
 
-import me.maksuslik.data.ChatRequestWithId
+import me.maksuslik.data.RequestWithId
 import me.maksuslik.data.ChatUpdateRequest
 import me.maksuslik.data.CreateChatRequest
 import me.maksuslik.data.MessageSendRequest
@@ -34,24 +34,26 @@ class ChatController(val authService: AuthService, val chatRepo: ChatRepo, val m
         val user = authService.getByTokenOrThrow(token)
 
         val chats = chatRepo.findChatsByUserId(user.id)
-        val list = chats.map {
-            println(it.participants.find { it.id.userId == user.id }?.role)
-            mapOf(
-                "id" to it.id.toString(),
-                "title" to (it.title ?: ""),
-                "members" to it.members.toString(),
-                "type" to it.type.toString(),
-                "role" to it.participants.find { it.id.userId == user.id }?.role
-            )
+        val list = chats.map { chat ->
+            chatService.getChatForUser(user, chat)
         }
 
         return ResponseEntity.ok(list)
     }
 
+    @PostMapping("/get/matrix")
+    fun getChatByMatrixId(@RequestHeader("Authorization") token: String, @RequestBody request: RequestWithId): ResponseEntity<Any> {
+        val user = authService.getByTokenOrThrow(token)
+        val chat = chatRepo.findByMatrixChatId(request.id).orElseThrow { StatusCodeException(404, Message.NOT_FOUND) }
+        val mapped = chatService.getChatForUser(user, chat)
+
+        return ResponseEntity.ok(mapped)
+    }
+
     @PostMapping("/create")
     fun createChat(@RequestHeader("Authorization") token: String, @RequestBody request: CreateChatRequest): ResponseEntity<Map<String, Any>> {
         val user = authService.getByTokenOrThrow(token)
-        val chat = chatService.createChat(request.name, ChatType.GROUP, user)
+        val chat = chatService.createChat(request, ChatType.GROUP, user)
 
         return ResponseEntity.ok(chat)
     }
@@ -84,7 +86,7 @@ class ChatController(val authService: AuthService, val chatRepo: ChatRepo, val m
     }
 
     @PostMapping("/invite/get")
-    fun getInviteData(@RequestHeader("Authorization") token: String, @RequestBody body: ChatRequestWithId): ResponseEntity<Any> {
+    fun getInviteData(@RequestHeader("Authorization") token: String, @RequestBody body: RequestWithId): ResponseEntity<Any> {
         val user = authService.getByTokenOrThrow(token)
         val chat = chatRepo.findById(UUID.fromString(body.id)).orElseThrow { StatusCodeException(404, Message.NOT_FOUND) }
 
@@ -106,7 +108,7 @@ class ChatController(val authService: AuthService, val chatRepo: ChatRepo, val m
     }
 
     @PostMapping("/join")
-    fun joinChat(@RequestHeader("Authorization") token: String, @RequestBody body: ChatRequestWithId): ResponseEntity<Any> {
+    fun joinChat(@RequestHeader("Authorization") token: String, @RequestBody body: RequestWithId): ResponseEntity<Any> {
         val user = authService.getByTokenOrThrow(token)
         val chat = chatRepo.findById(UUID.fromString(body.id)).orElseThrow { StatusCodeException(404, Message.NOT_FOUND) }
 
@@ -123,11 +125,11 @@ class ChatController(val authService: AuthService, val chatRepo: ChatRepo, val m
 
         chatRepo.save(chat)
 
-        return ResponseEntity.ok(chat.toMap())
+        return ResponseEntity.ok(chatService.getChatForUser(user, chat))
     }
 
     @PostMapping("/leave")
-    fun leaveChat(@RequestHeader("Authorization") token: String, @RequestBody body: ChatRequestWithId): ResponseEntity<Any> {
+    fun leaveChat(@RequestHeader("Authorization") token: String, @RequestBody body: RequestWithId): ResponseEntity<Any> {
         val user = authService.getByTokenOrThrow(token)
         val chat = chatRepo.findById(UUID.fromString(body.id)).orElseThrow { StatusCodeException(404, Message.NOT_FOUND) }
 
@@ -140,7 +142,7 @@ class ChatController(val authService: AuthService, val chatRepo: ChatRepo, val m
     }
 
     @DeleteMapping("/delete")
-    fun deleteChat(@RequestHeader("Authorization") token: String, @RequestBody body: ChatRequestWithId) {
+    fun deleteChat(@RequestHeader("Authorization") token: String, @RequestBody body: RequestWithId) {
         val user = authService.getByTokenOrThrow(token)
         val chat = chatRepo.findById(UUID.fromString(body.id)).orElseThrow { StatusCodeException(404, Message.NOT_FOUND) }
         chatRepo.delete(chat)

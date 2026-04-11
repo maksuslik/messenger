@@ -3,11 +3,18 @@ import Sidebar from './component/Sidebar';
 import ChatWindow from './component/ChatWindow';
 import Settings from './component/Settings';
 import { apiService } from './service/api';
-import { User, Chat, Message, Profile, FriendData } from './types';
+import { User, Chat, Message, FriendData } from './types';
 import './App.css';
 import ChatSettings from './component/ChatSettings';
+import { matrixService, useMatrix } from './service/MatrixService';
+
+type SyncState = 'ERROR' | 'PREPARED' | 'SYNCING' | 'CATCHUP' | 'RECONNECTING' | 'STOPPED';
 
 const App: React.FC = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isMatrixReady, setIsMatrixReady] = useState(false);
+  const [syncState, setSyncState] = useState<SyncState | null>(null);
+
   const [profile, setProfile] = useState<User | null>(null);
   const [chats, setChats] = useState<Chat[]>([]);
   const [friends, setFriends] = useState<FriendData[]>([]);
@@ -24,6 +31,34 @@ const App: React.FC = () => {
   useEffect(() => {
     loadInitialData();
   }, []);
+
+  useEffect(() => {
+    const unsubscribe = matrixService.subscribeToNewRooms(async (roomId: string) => {
+      console.log('📬 New room detected:', roomId);
+      
+      const existingChat = chats.find(c => c.matrixChatId === roomId);
+      if (existingChat) {
+        console.log('ℹ️ Chat already exists:', roomId);
+        return;
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      console.log("roomId: " + roomId)
+      const newChat = await apiService.getChatByMatrixId(roomId);
+      if (newChat) {
+        console.log('✅ Adding new chat to list:', newChat);
+        const chatsData = await apiService.getChats();
+        setChats(chatsData);
+        if(newChat.type === "DM") {
+          const friendData = await apiService.getFriends();
+          setFriends(friendData);
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, [chats, friends])
 
   useEffect(() => {
     if (activeChat) {
@@ -43,13 +78,30 @@ const App: React.FC = () => {
 
       setProfile(profileData);
 
+      const unsubscribe = matrixService.subscribeToSyncState((state) => {
+        setSyncState(state);
+        if (state === 'SYNCING' || state === 'PREPARED') {
+          setIsMatrixReady(true);
+        }
+      });
+
+      try {
+        await matrixService.waitForSync(30000);
+        setIsMatrixReady(true);
+        setIsAuthenticated(true);
+      } catch (e) {
+        setIsMatrixReady(true);
+        setIsAuthenticated(true);
+      }
+
+      unsubscribe();
       const [chatsData, friendshipData] = await Promise.all([
         apiService.getChats(),
         apiService.getFriends()
       ]);
-      setProfile(profileData);
       setChats(chatsData);
       setFriends(friendshipData)
+
     } catch (error) {
       console.error('Error loading data:', error);
     }
@@ -91,7 +143,10 @@ const App: React.FC = () => {
     const name = prompt('Введите название группы:');
     if (name) {
       try {
-        const newChat = await apiService.createChat(name);
+        const roomId = await matrixService.createRoom(name, 'GROUP');
+        const newChat = await apiService.createChat(name, roomId);
+        await matrixService.getClient()?.joinRoom(roomId);
+        console.log("roomId: " + roomId + " " + matrixService.getClient()?.getRoom(roomId))
         setChats((prev) => [...prev, newChat]);
 
         setShowSettings(false);
@@ -112,8 +167,7 @@ const App: React.FC = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    location.reload();
+    logout();
   };
 
   const handleDeleteAccount = async () => {
@@ -123,13 +177,20 @@ const App: React.FC = () => {
           return;
         
         await apiService.deleteProfile();
-        localStorage.removeItem('authToken');
-        location.reload();
+        logout();
       } catch (error) {
         console.error('Error deleting account:', error);
       }
     }
   };
+
+  const logout = () => {
+    matrixService.logout();
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('matrixUserId');
+    localStorage.removeItem('matrixAccessToken');
+    location.reload();
+  }
 
   const handleUpdateChat = async (chat: Partial<Chat>) => {
     setShowChatSettings(false);
@@ -184,7 +245,7 @@ const App: React.FC = () => {
       return chat?.title!!;
   }
 
-  if (!profile) {
+  if (!profile || !isMatrixReady) {
     return <div className="loading-screen">Загрузка...</div>;
   }
 
@@ -213,12 +274,11 @@ const App: React.FC = () => {
       />
       
       <ChatWindow
-        chatId={activeChat}
-        chat={getChatTitle()}
-        messages={messages}
+        chat={chats.find((chat) => chat.id == activeChat)!!}
+        //messages={messages}
         onSendMessage={handleSendMessage}
         onClickSettings={() => setShowChatSettings(true)}
-        isLoading={isLoading}
+        //isLoading={isLoading}
         isLoginPage={showLoginPage}
         isSignupPage={showSignupPage}
         onLogin={() => {
@@ -250,7 +310,10 @@ const App: React.FC = () => {
             handleLeaveChat();
             setSidebarOpen(true);
           }}
-          onRemoveFriend={handleRemoveFriend}
+          onRemoveFriend={() => {
+            handleRemoveFriend();
+            setSidebarOpen(true);
+          }}
         />
       )}
 

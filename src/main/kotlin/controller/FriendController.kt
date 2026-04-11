@@ -1,6 +1,8 @@
 package me.maksuslik.controller
 
-import me.maksuslik.data.ChatRequestWithId
+import me.maksuslik.data.RequestWithId
+import me.maksuslik.data.CreateChatRequest
+import me.maksuslik.data.AcceptFriendInviteRequest
 import me.maksuslik.data.GetFriendInviteRequest
 import me.maksuslik.entity.ChatType
 import me.maksuslik.entity.Friendship
@@ -8,16 +10,12 @@ import me.maksuslik.entity.FriendshipId
 import me.maksuslik.entity.FriendshipStatus
 import me.maksuslik.exception.StatusCodeException
 import me.maksuslik.repository.FriendshipRepo
-import me.maksuslik.repository.MessageRepo
 import me.maksuslik.repository.UserRepo
 import me.maksuslik.service.AuthService
 import me.maksuslik.service.ChatService
 import me.maksuslik.util.Message
-import org.apache.coyote.Response
-import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
 import java.util.UUID
 
 @RestController
@@ -37,12 +35,11 @@ class FriendController(val authService: AuthService, val userRepo: UserRepo, val
             )
         }
 
-        println("friends: $users")
         return ResponseEntity.ok(users)
     }
 
     @PostMapping("/remove")
-    fun removeFriend(@RequestHeader("Authorization") token: String, @RequestBody body: ChatRequestWithId): ResponseEntity<Any> {
+    fun removeFriend(@RequestHeader("Authorization") token: String, @RequestBody body: RequestWithId): ResponseEntity<Any> {
         val user = authService.getByTokenOrThrow(token)
         val friendship = friendshipRepo.findByChatId(UUID.fromString(body.id)).orElseThrow { StatusCodeException(404, Message.NOT_FOUND) }
 
@@ -65,7 +62,7 @@ class FriendController(val authService: AuthService, val userRepo: UserRepo, val
     @PostMapping("/invite/get")
     fun getInviteData(@RequestHeader("Authorization") token: String, @RequestBody request: GetFriendInviteRequest): ResponseEntity<Any> {
         val user = authService.getByTokenOrThrow(token)
-        val friend = userRepo.findById(UUID.fromString(request.token)).orElseThrow { StatusCodeException(401, Message.NOT_FOUND) }
+        val friend = userRepo.findById(UUID.fromString(request.token)).orElseThrow { StatusCodeException(404, Message.NOT_FOUND) }
 
         if(friend.id == user.id || friendshipRepo.findFriends(user.id).any { it.id?.friendId == friend.id || it.id?.userId == friend.id })
             return ResponseEntity.status(409).body("message" to Message.CONFLICT)
@@ -78,11 +75,11 @@ class FriendController(val authService: AuthService, val userRepo: UserRepo, val
     }
 
     @PostMapping("/accept")
-    fun acceptInvite(@RequestHeader("Authorization") token: String, @RequestBody request: GetFriendInviteRequest): ResponseEntity<Any> {
+    fun acceptInvite(@RequestHeader("Authorization") token: String, @RequestBody request: AcceptFriendInviteRequest): ResponseEntity<Any> {
         val user = authService.getByTokenOrThrow(token)
         val friend = userRepo.findById(UUID.fromString(request.token)).orElseThrow { StatusCodeException(401, Message.NOT_FOUND) }
 
-        val response = chatService.createChat("DM", ChatType.DM, user, friend)
+        val response = chatService.createChat(CreateChatRequest("DM", request.matrixChatId), ChatType.DM, user, friend)
 
         val friendship = Friendship(
             FriendshipId(user.id, friend.id),

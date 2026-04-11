@@ -1,5 +1,6 @@
 package me.maksuslik.service
 
+import me.maksuslik.data.CreateChatRequest
 import me.maksuslik.entity.Chat
 import me.maksuslik.entity.ChatParticipant
 import me.maksuslik.entity.ChatParticipantId
@@ -12,17 +13,18 @@ import java.util.UUID
 
 @Service
 class ChatService(val chatRepo: ChatRepo) {
-    fun createChat(name: String, type: ChatType, vararg members: User): Map<String, String> {
+    fun createChat(request: CreateChatRequest, type: ChatType, vararg members: User): Map<String, String> {
         val chatId = UUID.randomUUID()
 
         val chat = Chat(
-            name,
+            request.name,
             members.size,
             null,
             null,
             type,
             mutableListOf(),
             mutableListOf(),
+            request.matrixRoomId,
             chatId
         )
 
@@ -42,10 +44,23 @@ class ChatService(val chatRepo: ChatRepo) {
 
         return mapOf(
             "id" to chatId.toString(),
-            "title" to name,
+            "title" to request.name,
             "members" to members.size.toString(),
             "type" to type.toString(),
-            "role" to role.toString()
+            "role" to role.toString(),
+            "matrixChatId" to request.matrixRoomId
+        )
+    }
+
+    fun getChatForUser(user: User, chat: Chat): Map<String, String?> {
+        val chatTitle = if(chat.type == ChatType.DM) chat.participants.find { it.id.userId != user.id }?.user?.login ?: "" else chat.title ?: ""
+        return mapOf(
+            "id" to chat.id.toString(),
+            "title" to chatTitle,
+            "members" to chat.members.toString(),
+            "type" to chat.type.toString(),
+            "role" to chat.participants.find { it.id.userId == user.id }?.role?.name,
+            "matrixChatId" to chat.matrixChatId
         )
     }
 }

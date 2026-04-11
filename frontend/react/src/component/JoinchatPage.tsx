@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../service/api';
 import { ChatInviteData } from '../types'
+import { matrixService } from '../service/MatrixService';
 import '../style/InvitePage.css';
 
 const JoinchatPage: React.FC = () => {
@@ -26,6 +27,14 @@ const JoinchatPage: React.FC = () => {
 
   const loadInvite = async () => {
     try {
+      const authToken = localStorage.getItem("authToken");
+      if(!authToken) {
+        setError("Вы не авторизованы!")
+        return;
+      }
+
+      await apiService.getProfile();
+
       const data = await apiService.getChatInviteData(token!!);
       setInvite(data);
     } catch (err: any) {
@@ -40,7 +49,9 @@ const JoinchatPage: React.FC = () => {
     
     setProcessing(true);
     try {
-      await apiService.acceptChatInvite(token);
+      const chatData = await apiService.acceptChatInvite(token);
+      console.log("mi: " + chatData.matrixChatId!! + " " + matrixService.getClient()?.getRoom(chatData.matrixChatId!!))
+      const room = await matrixService.getClient()?.joinRoom(chatData.matrixChatId!!);
       navigate('/', { state: { showNotification: 'Вы добавлены в чат!' } });
     } catch (err: any) {
       setError(err.response?.data?.message || 'Ошибка при принятии приглашения');

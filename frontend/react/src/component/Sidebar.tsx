@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Chat, FriendData } from '../types';
+import { matrixService } from '../service/MatrixService';
 import '../style/Sidebar.css';
 
 interface SidebarProps {

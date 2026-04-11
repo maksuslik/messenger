@@ -1,6 +1,7 @@
 package me.maksuslik.controller
 
 import me.maksuslik.data.ProfileUpdateRequest
+import me.maksuslik.data.RequestWithId
 import me.maksuslik.exception.StatusCodeException
 import me.maksuslik.repository.UserRepo
 import me.maksuslik.service.AuthService
@@ -9,10 +10,12 @@ import me.maksuslik.util.Validator
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.PatchMapping
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import java.util.UUID
 
 @RestController
 @RequestMapping("/api/profile")
@@ -49,5 +52,12 @@ class UserController(val authService: AuthService, val userRepo: UserRepo) {
     fun deleteProfile(@RequestHeader("Authorization") token: String) {
         val user = authService.getByTokenOrThrow(token)
         userRepo.delete(user)
+    }
+
+    @PostMapping("/matrix")
+    fun getMatrixId(@RequestHeader("Authorization") auth: String, @RequestBody request: RequestWithId): ResponseEntity<String> {
+        val user = authService.getByTokenOrThrow(auth)
+        val target = userRepo.findById(UUID.fromString(request.id)).orElseThrow { StatusCodeException(404, Message.NOT_FOUND) }
+        return ResponseEntity.ok(target.matrixUserId)
     }
 }

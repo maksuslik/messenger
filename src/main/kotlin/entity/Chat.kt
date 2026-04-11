@@ -27,10 +27,12 @@ data class Chat(
     @OneToMany(mappedBy = "chat", cascade = [CascadeType.ALL], orphanRemoval = true)
     var participants: MutableList<ChatParticipant> = mutableListOf(),
 
+    var matrixChatId: String?,
+
     @Id
     var id: UUID? = UUID.randomUUID(),
 ) {
-    constructor(): this(null, 0, null, null, ChatType.DM, mutableListOf(), mutableListOf(), UUID.randomUUID())
+    constructor(): this(null, 0, null, null, ChatType.DM, mutableListOf(), mutableListOf(), null, UUID.randomUUID())
 
     fun toMap(): Map<String, String?> {
         return mapOf(

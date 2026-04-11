@@ -6,6 +6,8 @@ export interface User {
   findById?: boolean;
   isTemporary?: boolean;
   status?: 'online' | 'offline';
+  matrixUserId?: string;
+  matrixAccessToken?: string;
 }
 
 export interface Chat {
@@ -14,6 +16,7 @@ export interface Chat {
   avatar?: string;
   members: number;
   role?: string;
+  matrixChatId?: string;
   //lastMessage?: string;
   //lastMessageTime?: string;
   type: 'GROUP' | 'DM';
@@ -40,6 +43,8 @@ export interface Friendship {
   userId: string;
   friendId: string;
   chatId: string;
+  user?: User;
+  friend?: User;
   status: 'pending' | 'accepted' | 'declined';
 }
 

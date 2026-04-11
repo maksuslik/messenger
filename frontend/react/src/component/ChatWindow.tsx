@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Message, User } from '../types';
+import { Chat, Message, User } from '../types';
 import '../style/ChatWindow.css';
 import { apiService } from '../service/api'
+import { matrixService } from '../service/MatrixService';
 
 interface ChatWindowProps {
-  chatId: string | null;
-  chat: string;
-  messages: Message[];
+  chat?: Chat;
+  //messages: Message[];
   onSendMessage: (content: string) => void;
   onClickSettings: () => void;
-  isLoading: boolean;
+  //isLoading: boolean;
   isLoginPage: boolean;
   isSignupPage: boolean;
   onLogin: () => void;
@@ -18,12 +18,11 @@ interface ChatWindowProps {
 }
 
 const ChatWindow: React.FC<ChatWindowProps> = ({
-  chatId,
   chat,
-  messages,
+  //messages,
   onSendMessage,
   onClickSettings,
-  isLoading,
+  //isLoading,
   isLoginPage,
   isSignupPage,
   onLogin,
@@ -31,6 +30,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   onClose
 }) => {
   const [inputValue, setInputValue] = useState('');
+  const [messages, setMessages] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [login, setLogin] = useState('');
@@ -38,6 +39,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [authError, setAuthError] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  const lastRoomIdRef = useRef<string | null>(null);
+  const unsubscribeRef = useRef<(() => void) | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -47,21 +51,90 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     scrollToBottom();
   }, [messages]);
 
-  const sendMessage = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!inputValue.trim() || !chatId) return;
+  useEffect(() => {
+    if (!chat) {
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+        unsubscribeRef.current = null;
+      }
+
+      setMessages([]);
+      return;
+    }
+
+    const loadMessages = async () => {
+      setIsLoading(true);
+      try {
+        const msgs = await matrixService.getMessages(chat.matrixChatId!!);
+        setMessages(msgs);
+      } catch (error) {
+        console.error('Error loading messages:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadMessages();
+
+    if (unsubscribeRef.current && lastRoomIdRef.current !== chat.matrixChatId) {
+      unsubscribeRef.current();
+      unsubscribeRef.current = null;
+    }
+
+    unsubscribeRef.current = matrixService.subscribeToRoomMessages(
+      chat.matrixChatId!!,
+      async (newMessage: Message) => {
+        console.log('New message received:', newMessage);
         
-    onSendMessage(inputValue.trim());
-    setInputValue('');
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        const msgs = await matrixService.getMessages(chat.matrixChatId!!);
+        setMessages(msgs);
+      }
+    );
+
+    return () => {
+      if (unsubscribeRef.current) {
+        console.log('🔕 Unsubscribing from room messages');
+        unsubscribeRef.current();
+        unsubscribeRef.current = null;
+      }
+    };
+
+    /*const unsubscribe = matrixService.subscribeToRoom(chat.matrixChatId!!, (newMessage) => {
+      setMessages(prev => {
+        console.log("new msg")
+        if (prev.find(m => m.id === newMessage.id)) return prev;
+        return [...prev, newMessage];
+      });
+    });
+
+    return () => unsubscribe();*/
+  }, [chat]);
+
+  const sendMessage = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!inputValue.trim() || !chat) return;
+        
+    try {
+      setInputValue('');
+      console.log(matrixService.getClient()?.getRooms())
+      const room = matrixService.getClient()!!.getRoom(chat.matrixChatId);
+      console.log("chatId: " + chat.matrixChatId);
+      await matrixService.sendMessage(chat.matrixChatId!!, inputValue.trim());
+      console.log("sent")
+    } catch (error) {
+      console.log(error);
+      console.error('Error sending message:', error);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (!inputValue.trim() || !chatId) return;
-        
-    onSendMessage(inputValue.trim());
-    setInputValue('');
+      if (!inputValue.trim() || !chat) return;
+    
+      sendMessage(e);
     }
   };
 
@@ -71,8 +144,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     setIsAuthLoading(true);
 
     try {
-      const response = await apiService.login(login, password);
-      localStorage.setItem('authToken', response);
+      await apiService.login(login, password);
       setLogin('');
       setPassword('');
       setAuthError('');
@@ -103,9 +175,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     setIsAuthLoading(true);
 
     try {
-      const response = await apiService.signUp(login, password);
-      console.log(response)
-      localStorage.setItem('authToken', response.token!!);
+      await apiService.signUp(login, password);
       setLogin('');
       setPassword('');
       setConfirmPassword('');
@@ -203,7 +273,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     );
   }
 
-  if (!chatId) {
+  if (!chat) {
     return (
       <div className="chat-window empty">
         <div className="empty-state">Выберите чат для начала общения</div>
@@ -215,7 +285,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     <div className="chat-window">
       <div className="infobar">
         <button className="back-button" onClick={onClose}>←</button>
-          <h3>{chat}</h3>
+          <h3>{chat.title}</h3>
           <button className="settings-button" onClick={onClickSettings}>
             <img src="src/assets/icon_settings.svg" alt="Настройки" className="settings-image" />
           </button>
@@ -224,12 +294,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         {isLoading ? (
           <div className="loading">Загрузка сообщений...</div>
         ) : (
-          messages.map((message) => (
+          messages.map(message => (
             <div key={message.id} className="message">
-              <img src={message.avatar || '/default-avatar.png'} alt={message.username} className="message-avatar" />
+              <img src={'/default-avatar.png'} alt={message.username} className="message-avatar" />
               <div className="message-content">
                 <div className="message-header">
-                  <span className="message-username">{message.username}</span>
+                  <span className="message-username">{message.sender.replace(/^@/, '').split(':')[0]}</span>
                   <span className="message-time">{new Date(message.timestamp).toLocaleString('ru-RU')}</span>
                 </div>
                 <div className="message-text">{message.content}</div>

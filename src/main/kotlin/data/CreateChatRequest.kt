@@ -4,5 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 data class CreateChatRequest(
     @JsonProperty("name")
-    val name: String
+    val name: String,
+    @JsonProperty("matrixRoomId")
+    val matrixRoomId: String
 )

@@ -14,10 +14,16 @@ data class User(
     var password: String? = null,
     var avatar: String? = null,
     var findById: Boolean = true,
+
+    var matrixUserId: String? = null,
+
+    var matrixAccessToken: String? = null,
+    var matrixDeviceId: String? = null,
+
     @Id
     var id: UUID = UUID.randomUUID(),
 ) {
-    constructor(): this("", "", "", null, null, true, UUID.randomUUID())
+    constructor(): this("", "", "", null, null, true, null, null, null, UUID.randomUUID())
 
     fun toMap(): Map<String, Any?> {
         return mapOf<String, Any?>(
@@ -26,7 +32,10 @@ data class User(
             "avatar" to avatar,
             "token" to authToken,
             "findById" to findById,
-            "isTemporary" to (password == null)
+            "isTemporary" to (password == null),
+            "matrixUserId" to matrixUserId,
+            "matrixAccessToken" to matrixAccessToken,
+            "matrixDeviceId" to matrixDeviceId
         )
     }
 }
