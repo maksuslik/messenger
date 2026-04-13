@@ -10,7 +10,7 @@ import java.util.*
 data class User(
     var login: String,
     var userId: String,
-    var authToken: String, // TODO: to redis
+    var authToken: String,
     var password: String? = null,
     var avatar: String? = null,
     var findById: Boolean = true,

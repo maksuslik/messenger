@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  # ========== PostgreSQL ==========
+  postgres:
+    image: postgres:15-alpine
+    container_name: messenger-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-messenger_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-change_me_123}
+      POSTGRES_DB: ${DB_NAME:-messenger}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d
+    networks:
+      - messenger-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-messenger_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ========== Backend (Spring Boot) ==========
+  backend:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: messenger-backend
+    restart: unless-stopped
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${DB_NAME:-messenger}
+      - SPRING_DATASOURCE_USERNAME=${DB_USER:-messenger_user}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-change_me_123}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - MATRIX_HOMESERVER=${MATRIX_HOMESERVER:-http://synapse:8008}
+      - JWT_SECRET=${JWT_SECRET:-change_me_jwt_secret}
+      - JAVA_OPTS=-Xmx512m -Xms256m
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - messenger-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ========== Frontend (React) ==========
+  frontend:
+    build:
+      context: ./frontend/react
+      dockerfile: Dockerfile
+    container_name: messenger-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - messenger-network
+
+  # ========== Nginx (Reverse Proxy) ==========
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: messenger-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/logs:/var/log/nginx
+    depends_on:
+      - frontend
+      - backend
+      - synapse
+    networks:
+      - messenger-network
+
+  # ========== Matrix Synapse ==========
+  synapse:
+    image: matrixdotorg/synapse:latest
+    container_name: messenger-synapse
+    restart: unless-stopped
+    environment:
+      - SYNAPSE_SERVER_NAME=${SYNAPSE_SERVER_NAME:-matrix.yourdomain.com}
+      - SYNAPSE_REPORT_STATS=no
+    volumes:
+      - ./synapse:/data
+      - synapse_media:/data/media_store
+    networks:
+      - messenger-network
+    depends_on:
+      - postgres
+
+networks:
+  messenger-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  synapse_media:

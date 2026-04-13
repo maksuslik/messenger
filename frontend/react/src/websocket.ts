@@ -5,7 +5,7 @@ class WebSocketService {
   private socket: Socket | null = null;
 
   connect(token: string) {
-    this.socket = io('http://localhost:8080', {
+    this.socket = io('https://msldev.ru/', {
       auth: { token },
     });
 

@@ -32,7 +32,7 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({
     }
 
     const handleCreateUrl = () => {
-        const url = "http://localhost:3000/joinchat/" + chat.id;
+        const url = "https://msldev.ru/joinchat/" + chat.id;
         navigator.clipboard.writeText(url);
         alert('Ссылка скопирована в буфер обмена!');
     }

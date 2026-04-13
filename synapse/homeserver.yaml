@@ -1,0 +1,57 @@
+# deploy/synapse/homeserver.yaml
+# Configuration file for Synapse
+
+server_name: "msldev.ru"
+pid_file: /data/homeserver.pid
+
+# Слушатели (исправлена структура)
+listeners:
+  - port: 8008
+    tls: false
+    type: http
+    x_forwarded: true
+    resources:
+      - names: [client, federation]
+        compress: false
+
+# База данных (SQLite для простоты)
+database:
+  name: sqlite3
+  args:
+    database: /data/homeserver.db
+
+# ✅ Путь к конфигу логирования (должен существовать!)
+log_config: "/data/msldev.ru.log.config"
+
+# Пути к данным (все в /data/ — примонтированный том)
+media_store_path: /data/media_store
+uploads_path: /data/uploads
+max_upload_size: "50M"
+max_image_pixels: "32M"
+
+# Регистрация
+registration_shared_secret: "X5:2XN7*Q^WxbJE7K2NiYVFU#h=VE:.:pPq33Cu7mE=nJtW.:K"
+enable_registration: true
+enable_registration_without_verification: true
+enable_registration_captcha: false
+registrations_require_3pid: []
+
+# Секретные ключи
+macaroon_secret_key: "vAjGYmKo-Pd40PrgDh-Nbo.e4civ,H&Yf:,l=1G0eyeNMZNR3x"
+form_secret: "18;4j=G-~iVbNP2N#Q1;onIPi:+TnJqdm3X6MSM4Lhm0.~@xhY"
+
+# Ключи подписи
+signing_key_path: "/data/msldev.ru.signing.key"
+suppress_key_server_warning: true
+trusted_key_servers:
+  - server_name: "matrix.org"
+
+# Отчётность
+report_stats: false
+
+# Дополнительные настройки для стабильности
+user_directory_search_all_users: true
+enable_presence: false  # Отключаем presence для экономии ресурсов
+
+# Включение логирования ошибок в консоль (для отладки)
+# (основной лог настраивается в log_config файле)

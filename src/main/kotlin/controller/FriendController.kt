@@ -54,7 +54,7 @@ class FriendController(val authService: AuthService, val userRepo: UserRepo, val
     @PostMapping("/invite-url")
     fun getInviteUrl(@RequestHeader("Authorization") token: String): ResponseEntity<Any> {
         val user = authService.getByTokenOrThrow(token)
-        val url = "http://localhost:3000/invite/${user.id}"
+        val url = "https://msldev.ru/invite/${user.id}"
 
         return ResponseEntity.ok(mapOf("url" to url))
     }

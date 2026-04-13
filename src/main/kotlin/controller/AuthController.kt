@@ -12,12 +12,6 @@ class AuthController(val authService: AuthService) {
     @PostMapping("/init")
     fun initSession(): ResponseEntity<Any> {
         val user = authService.initSession()
-        println(user.toMap())
-        /*val response = mapOf(
-            "login" to user.login,
-            "token" to user.authToken,
-        )*/
-
         return ResponseEntity.ok(user.toMap())
     }
 
