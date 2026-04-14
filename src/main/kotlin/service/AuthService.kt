@@ -22,6 +22,7 @@ class AuthService(val userRepo: UserRepo, val matrixService: MatrixService) {
         val user = User(login, login, token)
 
         val matrixUser = matrixService.registerInMatrix(login, login)
+        println("MATRIX USER ID: ${matrixUser.userId}")
 
         user.matrixUserId = matrixUser.userId
         user.matrixAccessToken = matrixUser.accessToken
@@ -48,6 +49,7 @@ class AuthService(val userRepo: UserRepo, val matrixService: MatrixService) {
 
         user.matrixUserId = matrixUser.userId
         user.matrixAccessToken = matrixUser.accessToken
+        user.matrixDeviceId = matrixUser.deviceId
         userRepo.save(user)
 
         return ResponseEntity.ok(user.toMap())
@@ -61,11 +63,14 @@ class AuthService(val userRepo: UserRepo, val matrixService: MatrixService) {
         if(user.password != body.password)
             return ResponseEntity.status(401).body(mapOf("message" to Message.INCORRECT_DATA))
 
-        val matrixAuth = matrixService.loginToMatrix(body.username, body.password)
+        println("MATRIX USER ID: ${user.matrixUserId!!.split(":")[0].substring(1)}")
+        val matrixAuth = matrixService.loginToMatrix(user.matrixUserId!!.split(":")[0].substring(1), body.password)
         if(user.matrixAccessToken != matrixAuth.accessToken) {
             user.matrixAccessToken = encrypt(matrixAuth.accessToken)
-            userRepo.save(user)
         }
+
+        user.matrixDeviceId = matrixAuth.deviceId
+        userRepo.save(user)
 
         return ResponseEntity.ok(user.toMap())
     }

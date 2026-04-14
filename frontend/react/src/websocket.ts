@@ -10,7 +10,6 @@ class WebSocketService {
     });
 
     this.socket.on('new-message', (message: Message) => {
-      // Обновляем состояние в React
     });
   }
 

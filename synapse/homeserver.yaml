@@ -4,7 +4,6 @@
 server_name: "msldev.ru"
 pid_file: /data/homeserver.pid
 
-# Слушатели (исправлена структура)
 listeners:
   - port: 8008
     tls: false
@@ -14,16 +13,19 @@ listeners:
       - names: [client, federation]
         compress: false
 
-# База данных (SQLite для простоты)
 database:
-  name: sqlite3
+  name: psycopg2
   args:
-    database: /data/homeserver.db
+    user: synapse_user
+    password: YourSynapsePassword123!
+    database: synapse_db
+    host: postgres
+    port: 5432
+    cp_min: 5
+    cp_max: 10
 
-# ✅ Путь к конфигу логирования (должен существовать!)
 log_config: "/data/msldev.ru.log.config"
 
-# Пути к данным (все в /data/ — примонтированный том)
 media_store_path: /data/media_store
 uploads_path: /data/uploads
 max_upload_size: "50M"
@@ -49,9 +51,5 @@ trusted_key_servers:
 # Отчётность
 report_stats: false
 
-# Дополнительные настройки для стабильности
 user_directory_search_all_users: true
-enable_presence: false  # Отключаем presence для экономии ресурсов
-
-# Включение логирования ошибок в консоль (для отладки)
-# (основной лог настраивается в log_config файле)
+enable_presence: false

@@ -10,7 +10,7 @@ import org.springframework.web.client.RestTemplate
 @Service
 class MatrixService {
     private val restTemplate = RestTemplate()
-    private val matrixHomeserver = "http://193.42.126.166:8008"
+    private val matrixHomeserver = "https://msldev.ru"
 
     fun registerInMatrix(username: String, password: String): MatrixAuth {
         val url = "$matrixHomeserver/_matrix/client/r0/register"

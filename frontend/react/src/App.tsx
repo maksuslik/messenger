@@ -69,6 +69,7 @@ const App: React.FC = () => {
   const loadInitialData = async () => {
     try {
       await new Promise(resolve => setTimeout(resolve, 100));
+      console.log("LOADDD!!!");
     
       const profileData = await apiService.getProfile();
       
@@ -282,14 +283,18 @@ const App: React.FC = () => {
         isLoginPage={showLoginPage}
         isSignupPage={showSignupPage}
         onLogin={() => {
-          loadInitialData();
-          setShowLoginPage(false);
-          setSidebarOpen(true);
+          matrixService.logout().then(() => {
+            loadInitialData();
+            setShowLoginPage(false);
+            setSidebarOpen(true);
+          });
         }}
         onSignup={() => {
-          loadInitialData();
-          setShowSignupPage(false);
-          setSidebarOpen(true);
+          matrixService.logout().then(() => {
+            loadInitialData();
+            setShowSignupPage(false);
+            setSidebarOpen(true);
+          });
         }}
         onClose={() => {
           setActiveChat(null);

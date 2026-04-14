@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Profile, User } from '../types';
 import '../style/Settings.css';
+import { Invite } from './Invite'
 import { apiService } from '../service/api'
 
 interface SettingsProps {
@@ -26,6 +27,7 @@ const Settings: React.FC<SettingsProps> = ({
   onDeleteAccount,
   onClose,
 }) => {
+  const [showInvitePopup, setShowInvitePopup] = useState(false);
   const [formData, setFormData] = useState({
     username: profile.username,
     id: profile.id,
@@ -46,6 +48,11 @@ const Settings: React.FC<SettingsProps> = ({
       setAuthError(error.response?.data?.message || 'Ошибка входа');
     }
   };
+
+  const createUrl = () => {
+    const url = "https://msldev.ru/invite/" + profile._id
+    return url;
+  }
 
   return (
     <div className="settings-overlay" onClick={onClose}>
@@ -83,15 +90,6 @@ const Settings: React.FC<SettingsProps> = ({
             />
           </div>
 
-          <div className="checkbox-group">
-            <input
-              type="checkbox"
-              id="searchById"
-              checked={formData.findById!!}
-              onChange={(e) => setFormData({ ...formData, findById: e.target.checked })}
-            />
-            <label htmlFor="searchById">Разрешить искать меня по id.</label>
-          </div>
           {authError && <div className="auth-error">{authError}</div>}
         
           <div className="settings-actions">
@@ -99,9 +97,16 @@ const Settings: React.FC<SettingsProps> = ({
             <button className="btn btn-primary" onClick={onCreateGroup}>
               Создать группу
             </button>
-            <button className="btn btn-primary" onClick={onCreateInviteUrl}>
+            <button className="btn btn-primary" onClick={() => setShowInvitePopup(true)}>
               Создать URL для приглашения в друзья
             </button>
+
+            <Invite
+              isOpen={showInvitePopup}
+              onClose={() => setShowInvitePopup(false)}
+              inviteLink={createUrl()}
+              title="Приглашение в друзья"
+            />
           </div>
 
           <div className="settings-danger">

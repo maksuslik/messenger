@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Chat, Message, User } from '../types';
 import '../style/ChatWindow.css';
+import settingsIcon from '../assets/icon_settings.svg';
 import { apiService } from '../service/api'
 import { matrixService } from '../service/MatrixService';
 
@@ -287,7 +288,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         <button className="back-button" onClick={onClose}>←</button>
           <h3>{chat.title}</h3>
           <button className="settings-button" onClick={onClickSettings}>
-            <img src="src/assets/icon_settings.svg" alt="Настройки" className="settings-image" />
+            <img src={settingsIcon} alt="Настройки" className="settings-image" />
           </button>
       </div>
       <div className="messages-container">
@@ -311,7 +312,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       </div>
 
       <form className="message-input-form" onSubmit={sendMessage}>
-        <button type="button" className="attach-button">📎</button>
         <textarea
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}

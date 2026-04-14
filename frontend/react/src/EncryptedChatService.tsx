@@ -7,7 +7,6 @@ const client = sdk.createClient({
     deviceId: "YOUR_DEVICE_ID",
 });
 
-// Включаем шифрование
 await client.initRustCrypto();
 client.startClient();
 

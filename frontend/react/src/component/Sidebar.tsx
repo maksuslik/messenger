@@ -51,7 +51,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       }
 
-      {!searchOpen && <div className="search-icon" onClick={() => setSearchOpen(true)}>🔍</div>}
       </div>
 
       {!searchOpen && <div className="tabs">

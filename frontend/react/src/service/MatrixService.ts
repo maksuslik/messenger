@@ -5,7 +5,7 @@ import { Chat } from '../types';
 import { IndexedDBStore, MemoryCryptoStore } from 'matrix-js-sdk';
 import { CryptoEvent } from 'matrix-js-sdk/lib/crypto-api';
 
-const MATRIX_HOMESERVER = 'http://193.42.126.166:8008';
+const MATRIX_HOMESERVER = 'https://msldev.ru';
 
 type SyncState = 'ERROR' | 'PREPARED' | 'SYNCING' | 'CATCHUP' | 'RECONNECTING' | 'STOPPED';
 
@@ -266,17 +266,49 @@ class MatrixService {
   }
 
   async logout(): Promise<void> {
-    if (this.client) {
+  if (this.client) {
+    try {
       this.client.stopClient();
+      
+      try {
+        await this.client.logout();
+      } catch (e) {
+        console.warn('Server logout failed (expected if token invalid):', e);
+      }
+      
+      if (typeof (this.client as any).clearStores === 'function') {
+        await (this.client as any).clearStores();
+      }
+      
+      const databases = await window.indexedDB.databases();
+      for (const db of databases) {
+        if (db.name && (
+          db.name.startsWith('matrix-js-sdk:') || 
+          db.name.includes('rust-crypto') ||
+          db.name.includes('matrix')
+        )) {
+          console.log(`Deleting crypto DB: ${db.name}`);
+          await window.indexedDB.deleteDatabase(db.name);
+        }
+      }
+      
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('mx_') || key.includes('matrix')) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
       this.client = null;
       this.isInitialized = false;
-      console.log((await window.indexedDB.databases()).map((db) => db.name));
-      (await window.indexedDB.databases()).forEach((db) => {
-        if(db.name)
-          window.indexedDB.deleteDatabase(db.name);
-      })
     }
+
+    console.log("Device ID:", this.getClient()?.getDeviceId());
+    console.log("IndexedDB:", await indexedDB.databases()); 
   }
+}
 
   getClient(): matrixJsSdk.MatrixClient | null {
     return this.client;

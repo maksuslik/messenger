@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://localhost:8080/api'
+    baseURL: 'https://msldev.ru/api'
 });
 
 export default api;

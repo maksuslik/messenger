@@ -27,6 +27,7 @@ data class User(
 
     fun toMap(): Map<String, Any?> {
         return mapOf<String, Any?>(
+            "_id" to id.toString(),
             "id" to userId.toString(),
             "username" to login,
             "avatar" to avatar,

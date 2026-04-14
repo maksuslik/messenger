@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Chat } from '../types'
+import { Invite } from './Invite'
 import '../style/Settings.css'
 
 interface ChatSettingsProps {
@@ -22,6 +23,7 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({
     if(!chat)
         return;
 
+    const [showInvitePopup, setShowInvitePopup] = useState(false);
     const [formData, setFormData] = useState({
         title: chat.title
     });
@@ -31,10 +33,9 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({
         onSave({ id: chat.id, title: formData.title });
     }
 
-    const handleCreateUrl = () => {
+    const createUrl = () => {
         const url = "https://msldev.ru/joinchat/" + chat.id;
-        navigator.clipboard.writeText(url);
-        alert('Ссылка скопирована в буфер обмена!');
+        return url;
     }
 
     return (
@@ -61,8 +62,15 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({
                     </div>
 
                     <div className="settings-actions">
-                        <button className="btn btn-primary" onClick={handleCreateUrl}>Создать URL для добавления в группу</button>
+                        <button className="btn btn-primary" onClick={() => setShowInvitePopup(true)}>Создать URL для добавления в группу</button>
                     </div>
+
+                    <Invite
+                        isOpen={showInvitePopup}
+                        onClose={() => setShowInvitePopup(false)}
+                        inviteLink={createUrl()}
+                        title="Приглашение в группу"
+                    />
 
                     <div className="settings-danger">
                         <button className="btn btn-danger" onClick={onDelete}>Удалить чат</button>
